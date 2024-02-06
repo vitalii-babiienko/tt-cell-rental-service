@@ -1,9 +1,8 @@
-import requests
 from django.core.validators import EmailValidator
-from django.utils import timezone
 from rest_framework import serializers
 
 from order.models import Order
+from order.utils import generate_random_cell_id, validate_lease_end_time
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
@@ -34,19 +33,19 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         )
 
     def validate_end_timestamp(self, value):
-        start_timestamp = int(self.initial_data.get("start_timestamp", None))
-        current_timestamp = int(timezone.now().timestamp())
+        start_timestamp = int(self.initial_data.get("start_timestamp"))
 
-        if value <= start_timestamp or value <= current_timestamp:
-            raise serializers.ValidationError(
-                "end_timestamp must be greater than "
-                "start_timestamp and current timestamp!"
-            )
+        validate_lease_end_time(
+            start_timestamp,
+            value,
+            serializers.ValidationError,
+        )
+
         return value
 
     def validate_user_data(self, value):
-        email = value.get("email", None)
-        name = value.get("name", None)
+        email = value.get("email")
+        name = value.get("name")
 
         if not email or not name:
             raise serializers.ValidationError(
@@ -63,15 +62,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        try:
-            response = requests.get(
-                "https://csrng.net/csrng/csrng.php?min=1&max=50"
-            )
-            validated_data["cell_id"] = response.json()[0].get("random")
-        except Exception:
-            raise serializers.ValidationError(
-                "Failed to generate a random cell_id!"
-            )
+        validated_data["cell_id"] = (
+            generate_random_cell_id(serializers.ValidationError)
+        )
 
         user_data = validated_data.pop("user_data")
         validated_data["user_email"] = user_data.get("email")
