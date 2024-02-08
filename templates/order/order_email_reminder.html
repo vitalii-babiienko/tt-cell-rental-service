@@ -1,0 +1,3 @@
+<h1>Order #{{ order.id }}</h1>
+<p>We remind you that the lease term is ending!</p>
+<a href="{% url 'order:order_detail' order.slug %}">Click this link for details</a>
