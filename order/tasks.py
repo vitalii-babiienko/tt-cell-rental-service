@@ -33,7 +33,7 @@ def send_email_reminders_about_lease_ending():
     now = datetime.datetime.now()
     reminder_time = now + datetime.timedelta(minutes=30)
     orders_to_remind = Order.objects.filter(
-        end_timestamp__gt=reminder_time.timestamp(),
+        end_timestamp__lt=reminder_time.timestamp(),
         reminded=False,
     )
 
