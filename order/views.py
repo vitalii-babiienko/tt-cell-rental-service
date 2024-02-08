@@ -5,6 +5,7 @@ from rest_framework import generics
 from order.forms import OrderForm
 from order.models import Order
 from order.serializers import OrderCreateSerializer
+from order.tasks import send_order_confirmation_email
 from order.utils import generate_random_cell_id
 
 
@@ -27,6 +28,8 @@ def order_create_view(request):
                 user_name=form.cleaned_data.get("name"),
                 cell_id=cell_id,
             )
+
+            send_order_confirmation_email(order.id)
 
             return redirect("order:order_detail", slug=order.slug)
     else:
