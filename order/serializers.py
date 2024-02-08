@@ -2,6 +2,7 @@ from django.core.validators import EmailValidator
 from rest_framework import serializers
 
 from order.models import Order
+from order.tasks import send_order_confirmation_email
 from order.utils import generate_random_cell_id, validate_lease_end_time
 
 
@@ -71,5 +72,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         validated_data["user_name"] = user_data.get("name")
 
         order = Order.objects.create(**validated_data)
+
+        send_order_confirmation_email.delay(order.id)
 
         return order
